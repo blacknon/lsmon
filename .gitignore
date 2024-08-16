@@ -1,0 +1,12 @@
+# Meta files
+*.DS_Store
+*.sublime-*
+.vscode
+
+# Binary programs
+/lsmon
+*.exe
+
+# log
+error.log*
+*.log

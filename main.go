@@ -7,16 +7,14 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"sort"
 	"strings"
 
-	_ "net/http/pprof"
+	// _ "net/http/pprof"
 
 	"github.com/blacknon/lssh/check"
 	"github.com/blacknon/lssh/common"
@@ -160,34 +158,12 @@ USAGE:
 		r.Conf = data
 		r.Conf.Common.ConnectTimeout = 5
 
-		// is tty
-		r.IsTerm = c.Bool("term")
-
-		// Set port forwards
 		var err error
-		var forwards []*conf.PortForward
-
-		// Set remote port forwarding
-		for _, forwardargs := range c.StringSlice("R") {
-			f := new(conf.PortForward)
-			f.Mode = "R"
-
-			// If only numbers are passed as arguments, treat as Reverse Dynamic Port Forward
-			if regexp.MustCompile(`^[0-9]+$`).Match([]byte(forwardargs)) {
-				r.ReverseDynamicPortForward = forwardargs
-			} else {
-				f.Local, f.Remote, err = common.ParseForwardPort(forwardargs)
-				forwards = append(forwards, f)
-			}
-		}
 
 		// if err
 		if err != nil {
 			fmt.Printf("Error: %s \n", err)
 		}
-
-		// Local/Remote port forwarding port
-		r.PortForward = forwards
 
 		// Get stdin data(pipe)
 		// TODO(blacknon): os.StdinをReadAllで全部読み込んでから処理する方式だと、ストリームで処理出来ない
@@ -199,10 +175,6 @@ USAGE:
 				r.IsStdinPipe = true
 			}
 		}
-
-		go func() {
-			log.Println(http.ListenAndServe("localhost:6060", nil))
-		}()
 
 		// create AuthMap
 		r.CreateAuthMethodMap()

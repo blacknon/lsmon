@@ -21,6 +21,8 @@ github.com/blacknon/go-sshproc v0.1.0 h1:ixaasLur93dHrK5m1zYmnG3aKdaeqL4GRZs0cTi
 github.com/blacknon/go-sshproc v0.1.0/go.mod h1:qrXgAYBxLfPkmm/jzUroGVbxV0DwPrz+Vu1JTyham5I=
 github.com/blacknon/go-x11auth v0.1.0 h1:SnljCPWcvglWeGAlKc1RAPMHnOfMpM9+GrTGEUQ1lqQ=
 github.com/blacknon/go-x11auth v0.1.0/go.mod h1:SKOCa19LluXHyB+OaLYobquzceE0SWxVW7e/qU5xGBM=
+github.com/blacknon/lssh v0.6.11 h1:6LF/X7Fhwyj7zG+RsxF4vpYd0MJIFIw4vgzcBv4waNk=
+github.com/blacknon/lssh v0.6.11/go.mod h1:8+Ok3QU0WxDP91XQaCj/VJ8PnYkLwxelqLEFGid+RBg=
 github.com/blacknon/mview v0.1.4 h1:aVmMWDB+b6WPv4/onhXn3XmbqPHY7HxvxdVnT5wlJz8=
 github.com/blacknon/mview v0.1.4/go.mod h1:zDpvfOFP8nr541iWsT/QEGSPh78DmkGEVeWYUM5gYSI=
 github.com/c9s/goprocinfo v0.0.0-20210130143923-c95fcf8c64a8 h1:SjZ2GvvOononHOpK84APFuMvxqsk3tEIaKH/z4Rpu3g=

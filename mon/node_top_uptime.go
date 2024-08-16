@@ -96,11 +96,11 @@ func (t *TopUptime) Update(wg *sync.WaitGroup) {
 	t.Table.SetCell(1, 1, uptimeCell)
 
 	// Get and Set Tasks
-	tasks, threads, err := t.Node.GetTaskCounts()
+	tasks, err := t.Node.GetTaskCounts()
 	if err != nil {
 		return
 	}
-	tasksCell := mview.NewTableCell(fmt.Sprintf(" [gray]Tasks:[none] %d, [gray]Threads:[none] %d", tasks, threads))
+	tasksCell := mview.NewTableCell(fmt.Sprintf(" [gray]Tasks:[none] %d", tasks))
 	tasksCell.SetTextColor(tcell.ColorGray)
 	t.Table.SetCell(2, 1, tasksCell)
 

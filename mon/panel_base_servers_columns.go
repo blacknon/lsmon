@@ -172,29 +172,20 @@ func (m *Monitor) getBaseGridTableDataMemUsage(isConnect bool, node *Node) (memU
 	return
 }
 
-func (m *Monitor) getBaseGridTableDataTasks(isConnect bool, node *Node) (tasksCell, threadCell *mview.TableCell) {
+func (m *Monitor) getBaseGridTableDataTasks(isConnect bool, node *Node) (tasksCell *mview.TableCell) {
 	if isConnect {
-		tasks, threads, err := node.GetTaskCounts()
+		tasks, err := node.GetTaskCounts()
 
 		if err != nil {
 			tasksCell = mview.NewTableCell("-")
 			tasksCell.Align = mview.AlignCenter
-
-			threadCell = mview.NewTableCell("-")
-			threadCell.Align = mview.AlignCenter
 		} else {
 			tasksCell = mview.NewTableCell(fmt.Sprintf("%6d", tasks))
 			tasksCell.Align = mview.AlignRight
-
-			threadCell = mview.NewTableCell(fmt.Sprintf("%6d", threads))
-			threadCell.Align = mview.AlignRight
 		}
 	} else {
 		tasksCell = mview.NewTableCell("-")
 		tasksCell.Align = mview.AlignCenter
-
-		threadCell = mview.NewTableCell("-")
-		threadCell.Align = mview.AlignCenter
 	}
 
 	return

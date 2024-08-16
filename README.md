@@ -38,6 +38,10 @@ To start lsmon, run the following command.
 lsmon
 ```
 
+## NOTE
+
+This tool is implemented by using SFTP to reference the contents of /proc, which introduces some overhead.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

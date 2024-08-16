@@ -7,7 +7,6 @@ package monitor
 import (
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -553,22 +552,18 @@ func (n *Node) GetUptime() (uptime *linux.Uptime, err error) {
 	return
 }
 
-func (n *Node) GetTaskCounts() (tasks, threads uint64, err error) {
+func (n *Node) GetTaskCounts() (tasks uint64, err error) {
 	if !n.CheckClientAlive() {
 		err = fmt.Errorf("Node is not connected")
 		return
 	}
 
-	tasks = uint64(len(n.LatestProcessLists))
-
-	threads = 0
-	for _, p := range n.LatestProcessLists {
-		if p == nil {
-			continue
-		}
-		t := p.Status.Threads
-		threads += t
+	processList, err := n.con.ListInPID("/proc")
+	if err != nil {
+		return
 	}
+
+	tasks = uint64(len(processList))
 
 	return
 }
@@ -846,37 +841,6 @@ func (n *Node) MonitoringNetworkIO() (err error) {
 	return
 }
 
-func (n *Node) MonitoringTasks() (err error) {
-	if !n.CheckClientAlive() {
-		n.Lock()
-		n.LatestProcessLists = []*linux.Process{}
-		n.Unlock()
-		return
-	}
-
-	processes := []*linux.Process{}
-	processlist, err := n.con.ListInPID("/proc")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	for _, p := range processlist {
-		process, _ := n.con.ReadProcessPassPermission(p, "/proc")
-		if err != nil {
-			continue
-		}
-
-		processes = append(processes, process)
-	}
-
-	n.Lock()
-	n.LatestProcessLists = processes
-	n.Unlock()
-
-	return
-}
-
 func (n *Node) StartMonitoring() {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
@@ -885,15 +849,6 @@ func (n *Node) StartMonitoring() {
 		n.MonitoringCPUUsage()
 		n.MonitoringDiskIO()
 		n.MonitoringNetworkIO()
-	}
-}
-
-func (n *Node) StartMonitoringTasks() {
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		n.MonitoringTasks()
 	}
 }
 

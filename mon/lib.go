@@ -68,7 +68,6 @@ func Run(r *sshrun.Run) (err error) {
 	// Start Monitoring
 	for i := range monitor.Nodes {
 		go monitor.Nodes[i].StartMonitoring()
-		go monitor.Nodes[i].StartMonitoringTasks()
 	}
 
 	monitor.StartView()

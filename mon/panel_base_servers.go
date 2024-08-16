@@ -228,11 +228,11 @@ func (m *Monitor) updateBaseGridTableAtNode(node *Node) (result []*mview.TableCe
 	memUseCell, memTotalCell, swapUseCell, swapTotalCell := m.getBaseGridTableDataMemUsage(isConnect, node)
 	result = append(result, memUseCell, memTotalCell, swapUseCell, swapTotalCell)
 
-	// 10th(9), 11th(10)
-	tasksCell, threadsCell := m.getBaseGridTableDataTasks(isConnect, node)
-	result = append(result, tasksCell, threadsCell)
+	// 10th(9)
+	tasksCell := m.getBaseGridTableDataTasks(isConnect, node)
+	result = append(result, tasksCell)
 
-	// 12th, 13th, 14th(11, 12, 13)
+	// 11th, 12th, 13th
 	loadAvg15minCell, loadAvg5minCell, loadAvg1minCell := m.getBaseGridTableDataLoadAvg(isConnect, node)
 	result = append(result, loadAvg15minCell, loadAvg5minCell, loadAvg1minCell)
 
@@ -251,7 +251,6 @@ func getServerHeader() []string {
 		" SwapUse",
 		" SwapTotal",
 		" Tasks",
-		" Threads",
 		" LoadAvg15min",
 		" LoadAvg5min",
 		" LoadAvg1min",

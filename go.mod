@@ -7,7 +7,7 @@ toolchain go1.22.5
 require (
 	github.com/blacknon/go-sshproc v0.1.0
 	github.com/blacknon/lssh v0.6.11
-	github.com/blacknon/mview v0.1.4
+	github.com/blacknon/mview v0.1.5
 	github.com/c9s/goprocinfo v0.0.0-20210130143923-c95fcf8c64a8
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gdamore/tcell/v2 v2.7.1

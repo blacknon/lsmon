@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -99,4 +101,31 @@ func scaleMaxValue(maxValue float64) float64 {
 	// 桁数に基づいてスケーリングする
 	scale := math.Pow(10, math.Floor(math.Log10(maxValue)))
 	return math.Ceil(maxValue/scale) * scale
+}
+
+func parseSize(size string) int64 {
+	size = strings.ToUpper(strings.TrimSpace(size))
+	var factor int64 = 1
+
+	switch {
+	case strings.HasSuffix(size, "KB"):
+		factor = 1024
+		size = strings.TrimSuffix(size, "KB")
+	case strings.HasSuffix(size, "MB"):
+		factor = 1024 * 1024
+		size = strings.TrimSuffix(size, "MB")
+	case strings.HasSuffix(size, "GB"):
+		factor = 1024 * 1024 * 1024
+		size = strings.TrimSuffix(size, "GB")
+	case strings.HasSuffix(size, "TB"):
+		factor = 1024 * 1024 * 1024 * 1024
+		size = strings.TrimSuffix(size, "TB")
+	}
+
+	value, err := strconv.ParseFloat(strings.TrimSpace(size), 64)
+	if err != nil {
+		return 0
+	}
+
+	return int64(value * float64(factor))
 }

@@ -7,9 +7,9 @@ package monitor
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"sync"
 	"time"
+	"unsafe"
 
 	mview "github.com/blacknon/mview"
 	"github.com/gdamore/tcell/v2"
@@ -119,21 +119,14 @@ func (m *Monitor) createBaseGridTable() (table *mview.Table) {
 	table.SetSortFunc(func(column int, i, j []byte) bool {
 		switch column {
 		case 5, 6, 7, 8:
-			// Get the size s from the respective rows in the specified column
-			// s1str := *(*string)(unsafe.Pointer(&i))
-			s1str := string(i)
+			s1str := *(*string)(unsafe.Pointer(&i))
 			s1int := parseSize(s1str)
 
-			// s2str := *(*string)(unsafe.Pointer(&j))
-			s2str := string(j)
+			s2str := *(*string)(unsafe.Pointer(&j))
 			s2int := parseSize(s2str)
 
-			log.Printf("case size, column: %d,s1int: %d, s2int: %d", column, s1int, s2int)
-
-			// Perform comparison
 			return s1int < s2int
 		default:
-			log.Printf("default, column: %d, i: %s, j: %s", column, i, j)
 			return bytes.Compare(i, j) == -1
 		}
 	})

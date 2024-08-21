@@ -6,8 +6,12 @@ package monitor
 
 import (
 	"fmt"
+	"log"
 	"sync"
 	"time"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	mview "github.com/blacknon/mview"
 	"github.com/gdamore/tcell/v2"
@@ -159,6 +163,10 @@ func (n *Node) CreateNodeTop() (err error) {
 
 			top.Grid.SetRows(5, 2, 1, height4Row, 1, height6Row, -1)
 		}
+	}()
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
 	n.NodeTop = top

@@ -6,6 +6,7 @@ package monitor
 
 import (
 	"log"
+	"runtime"
 	"sync"
 	"time"
 
@@ -89,6 +90,7 @@ func (m *Monitor) reconnectServer() {
 		}
 
 		wg.Wait()
+		log.Printf("count runtime thread: %d \n", runtime.NumGoroutine())
 		log.Printf("exit Reconnect loop\n")
 	}
 }

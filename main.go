@@ -14,7 +14,8 @@ import (
 	"sort"
 	"strings"
 
-	// _ "net/http/pprof"
+	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/blacknon/lssh/check"
 	"github.com/blacknon/lssh/common"
@@ -69,7 +70,7 @@ USAGE:
 	app.Name = "LsMon"
 	app.Usage = "TUI list select and parallel ssh client shell."
 	app.Copyright = "blacknon(blacknon@orebibou.com)"
-	app.Version = "0.1.1"
+	app.Version = "0.1.3"
 
 	// Set options
 	app.Flags = []cli.Flag{
@@ -80,6 +81,7 @@ USAGE:
 
 		// Other bool
 		cli.BoolFlag{Name: "list,l", Usage: "print server list from config."},
+		cli.BoolFlag{Name: "debug", Usage: "debug pprof. use port 6060."},
 		cli.BoolFlag{Name: "help,h", Usage: "print this help"},
 	}
 	app.EnableBashCompletion = true
@@ -109,6 +111,8 @@ USAGE:
 
 		hosts := c.StringSlice("host")
 		confpath := c.String("file")
+
+		debug := c.Bool("debug")
 
 		// Get config data
 		data := conf.Read(confpath)
@@ -140,7 +144,7 @@ USAGE:
 		} else {
 			// View List And Get Select Line
 			l := new(list.ListInfo)
-			l.Prompt = "lssh>>"
+			l.Prompt = "lsmon>>"
 			l.NameList = names
 			l.DataList = data
 			l.MultiFlag = isMulti
@@ -174,6 +178,12 @@ USAGE:
 			if !terminal.IsTerminal(stdin) {
 				r.IsStdinPipe = true
 			}
+		}
+
+		if debug {
+			go func() {
+				log.Println(http.ListenAndServe("localhost:6060", nil))
+			}()
 		}
 
 		// create AuthMap

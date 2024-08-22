@@ -195,21 +195,28 @@ func (n *Node) Connect(r *sshrun.Run) (err error) {
 	con.SetLog("/dev/null", false)
 	con.SendKeepAliveInterval = 1
 
-	session, err := con.CreateSession()
-	if err != nil {
-		return
-	}
-
-	// send keepalive
-	go con.SendKeepAlive(session)
-
 	procCon := &sshproc.ConnectWithProc{Connect: con}
 	err = procCon.CreateSftpClient()
 	if err != nil {
+		con.Client.Close()
 		return
 	}
 
 	n.con = procCon
+
+	session, err := con.CreateSession()
+	if err != nil {
+		procCon.Client.Close()
+		procCon.CloseSftpClient()
+		con.Client.Close()
+		return
+	}
+
+	// send keepalive
+	go func() {
+		log.Println("Start KeepAlive. Server:", n.ServerName)
+		con.SendKeepAlive(session)
+	}()
 
 	return
 }

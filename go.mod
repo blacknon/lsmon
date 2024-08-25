@@ -24,7 +24,7 @@ require (
 	github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 // indirect
 	github.com/blacknon/crypto11 v1.2.7 // indirect
 	github.com/blacknon/go-nfs-sshlib v0.0.3 // indirect
-	github.com/blacknon/go-sshlib v0.1.16 // indirect
+	github.com/blacknon/go-sshlib v0.1.17 // indirect
 	github.com/blacknon/go-x11auth v0.1.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/dchest/bcrypt_pbkdf v0.0.0-20150205184540-83f37f9c154a // indirect

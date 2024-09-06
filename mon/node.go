@@ -198,17 +198,18 @@ func (n *Node) Connect(r *sshrun.Run) (err error) {
 	procCon := &sshproc.ConnectWithProc{Connect: con}
 	err = procCon.CreateSftpClient()
 	if err != nil {
-		con.Client.Close()
+		log.Printf("CreateSftpClient %s Error: %s", n.ServerName, err)
+		n.con.Connect = nil
+		procCon.CloseSftpClient()
 		return
 	}
 
 	n.con = procCon
-
 	session, err := con.CreateSession()
 	if err != nil {
-		procCon.Client.Close()
+		log.Printf("CreateSession %s Error: %s", n.ServerName, err)
+		n.con.Connect = nil
 		procCon.CloseSftpClient()
-		con.Client.Close()
 		return
 	}
 
@@ -216,6 +217,13 @@ func (n *Node) Connect(r *sshrun.Run) (err error) {
 	go func() {
 		log.Println("Start KeepAlive. Server:", n.ServerName)
 		con.SendKeepAlive(session)
+
+		// close sftp client
+		session.Close()
+		err := procCon.CloseSftpClient()
+		if err != nil {
+			log.Printf("CloseSession Error: %s", err)
+		}
 	}()
 
 	return

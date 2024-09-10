@@ -75,18 +75,18 @@ func (m *Monitor) reconnectServer() {
 	for range ticker.C {
 		var wg sync.WaitGroup
 		for _, node := range m.Nodes {
-			log.Printf("start Reconnect Server: %s", node.ServerName)
-			wg.Add(1)
+			// Check client alive
+			if !node.CheckClientAlive() {
+				wg.Add(1)
 
-			go func(n *Node, r *ssh.Run, wg *sync.WaitGroup) {
-				defer wg.Done()
-				if !n.CheckClientAlive() {
+				go func(n *Node, r *ssh.Run, wgg *sync.WaitGroup) {
+					defer wgg.Done()
 					log.Printf("try Reconnect Server: %s", n.ServerName)
 					err := n.Connect(r)
-					log.Printf("exit Reconnect Server: %s, err: %s", n.ServerName, err)
-				}
-			}(node, m.r, &wg)
 
+					log.Printf("exit Reconnect Server: %s, err: %s", n.ServerName, err)
+				}(node, m.r, &wg)
+			}
 		}
 
 		wg.Wait()

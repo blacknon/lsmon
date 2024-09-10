@@ -70,7 +70,7 @@ USAGE:
 	app.Name = "LsMon"
 	app.Usage = "TUI list select and parallel ssh client shell."
 	app.Copyright = "blacknon(blacknon@orebibou.com)"
-	app.Version = "0.1.3"
+	app.Version = "0.1.4"
 
 	// Set options
 	app.Flags = []cli.Flag{

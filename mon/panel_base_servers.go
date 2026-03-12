@@ -7,6 +7,7 @@ package monitor
 import (
 	"bytes"
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 	"unsafe"
@@ -156,12 +157,22 @@ type UpdateRows struct {
 	sync.RWMutex
 }
 
+const baseGridUpdateMaxParallel = 16
+
 func (m *Monitor) updateBaseGridTableRows() {
 	// Get table rows count
 	count := m.table.GetRowCount()
 
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
+	maxParallel := runtime.NumCPU()
+	if maxParallel > baseGridUpdateMaxParallel {
+		maxParallel = baseGridUpdateMaxParallel
+	}
+	if maxParallel < 1 {
+		maxParallel = 1
+	}
+	semaphore := make(chan struct{}, maxParallel)
 
 	for range ticker.C {
 		nodeRows := &UpdateRows{data: map[string][]*mview.TableCell{}}
@@ -178,15 +189,17 @@ func (m *Monitor) updateBaseGridTableRows() {
 			}
 
 			wg1.Add(1)
-			go func() {
+			go func(server string, node *Node) {
 				defer wg1.Done()
+				semaphore <- struct{}{}
+				defer func() { <-semaphore }()
 
 				rows := m.updateBaseGridTableAtNode(node)
 
 				nodeRows.Lock()
 				nodeRows.data[server] = rows
 				nodeRows.Unlock()
-			}()
+			}(server, node)
 		}
 		wg1.Wait()
 

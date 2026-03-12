@@ -1,0 +1,8 @@
+./command.go
+./daemon.go
+./daemon_unix.go
+./lock_file.go
+./lock_file_unix.go
+./os_executable.go
+./signal.go
+./syscall_dup.go

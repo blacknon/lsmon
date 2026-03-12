@@ -1,0 +1,5 @@
+./auth.go
+./cmd.go
+./connect.go
+./run.go
+./shell.go

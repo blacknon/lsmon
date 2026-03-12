@@ -1,0 +1,8 @@
+./api.go
+./api_common.go
+./escwait_darwin.go
+./syscalls_darwin.go
+./termbox.go
+./termbox_common.go
+./terminfo.go
+./terminfo_builtin.go

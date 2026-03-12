@@ -1,0 +1,11 @@
+./app.go
+./category.go
+./cli.go
+./command.go
+./context.go
+./errors.go
+./flag.go
+./flag_generated.go
+./funcs.go
+./help.go
+./sort.go

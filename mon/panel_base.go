@@ -108,8 +108,11 @@ func (m *Monitor) reDrawBasePanel() {
 		m.BaseGrid.SetRows(6, 0, 1)
 
 		// create top panel
-		top := m.GetNode(m.selectedNode).NodeTop
-		m.BaseGrid.AddItem(top.Grid, 1, 0, 1, 1, 0, 0, false)
+		node := m.GetNode(m.selectedNode)
+		if node != nil {
+			top := node.EnsureNodeTop()
+			m.BaseGrid.AddItem(top.Grid, 1, 0, 1, 1, 0, 0, false)
+		}
 
 		footer := m.createFooter()
 		m.BaseGrid.AddItem(footer, 2, 0, 1, 1, 0, 0, false)

@@ -26,6 +26,17 @@ type NodeTop struct {
 	sync.Mutex
 }
 
+func (n *Node) EnsureNodeTop() *NodeTop {
+	n.Lock()
+	defer n.Unlock()
+
+	if n.NodeTop == nil {
+		_ = n.CreateNodeTop()
+	}
+
+	return n.NodeTop
+}
+
 func (n *Node) CreateNodeTop() (err error) {
 	// Top Image
 	// | CPU()              | Memory()        | 2 line

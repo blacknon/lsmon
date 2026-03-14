@@ -132,8 +132,13 @@ type Node struct {
 	// Top
 	NodeTop *NodeTop
 
+	taskCountCache     uint64
+	taskCountUpdatedAt time.Time
+
 	sync.RWMutex
 }
+
+const taskCountTTL = 15 * time.Second
 
 // NewNode is create new Node struct.
 // with set default values
@@ -167,9 +172,6 @@ func NewNode(name string) *Node {
 		NetworkIOs:      map[string][]*NetworkIO{},
 		NetworkIOsLimit: 480,
 	}
-
-	// Create Top
-	_ = node.CreateNodeTop()
 
 	return node
 }
@@ -571,12 +573,25 @@ func (n *Node) GetTaskCounts() (tasks uint64, err error) {
 		return
 	}
 
+	n.RLock()
+	if !n.taskCountUpdatedAt.IsZero() && time.Since(n.taskCountUpdatedAt) < taskCountTTL {
+		tasks = n.taskCountCache
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
+
 	processList, err := n.con.ListInPID("/proc")
 	if err != nil {
 		return
 	}
 
 	tasks = uint64(len(processList))
+
+	n.Lock()
+	n.taskCountCache = tasks
+	n.taskCountUpdatedAt = time.Now()
+	n.Unlock()
 
 	return
 }

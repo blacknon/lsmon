@@ -78,6 +78,8 @@ USAGE:
 		cli.StringSliceFlag{Name: "host,H", Usage: "connect `servername`."},
 		cli.StringFlag{Name: "file,F", Value: defConf, Usage: "config `filepath`."},
 		cli.StringFlag{Name: "logfile,L", Usage: "Set log file path."},
+		cli.IntFlag{Name: "interval", Value: 5, Usage: "monitor refresh interval in `seconds`."},
+		cli.IntFlag{Name: "reconnect-interval", Value: 10, Usage: "reconnect retry interval in `seconds`."},
 
 		// Other bool
 		cli.BoolFlag{Name: "list,l", Usage: "print server list from config."},
@@ -111,6 +113,8 @@ USAGE:
 
 		hosts := c.StringSlice("host")
 		confpath := c.String("file")
+		intervalSec := c.Int("interval")
+		reconnectIntervalSec := c.Int("reconnect-interval")
 
 		debug := c.Bool("debug")
 
@@ -189,7 +193,12 @@ USAGE:
 		// create AuthMap
 		r.CreateAuthMethodMap()
 
-		err = mon.Run(r)
+		options := mon.Options{
+			UpdateIntervalSec:    intervalSec,
+			ReconnectIntervalSec: reconnectIntervalSec,
+		}
+
+		err = mon.Run(r, options)
 		return err
 	}
 	return app

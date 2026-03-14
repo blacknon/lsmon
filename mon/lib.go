@@ -6,8 +6,10 @@ package monitor
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	sshrun "github.com/blacknon/lssh/ssh"
 	mview "github.com/blacknon/mview"
@@ -37,13 +39,52 @@ type Monitor struct {
 	top          *mview.Grid  // MainTab(List)'s top
 	selectedNode string
 	enableTop    bool // MainTab(List) enable Top
+	options      Options
 
 	sync.Mutex
 }
 
-func Run(r *sshrun.Run) (err error) {
+type Options struct {
+	UpdateIntervalSec    int
+	ReconnectIntervalSec int
+}
+
+func (o *Options) normalize() {
+	if o.UpdateIntervalSec <= 0 {
+		o.UpdateIntervalSec = 5
+	}
+
+	if o.ReconnectIntervalSec <= 0 {
+		o.ReconnectIntervalSec = 10
+	}
+}
+
+func (o Options) updateInterval() time.Duration {
+	return time.Duration(o.UpdateIntervalSec) * time.Second
+}
+
+func (o Options) reconnectInterval() time.Duration {
+	return time.Duration(o.ReconnectIntervalSec) * time.Second
+}
+
+func (o Options) reconnectMaxParallel() int {
+	maxParallel := runtime.NumCPU()
+	if maxParallel > baseGridUpdateMaxParallel {
+		maxParallel = baseGridUpdateMaxParallel
+	}
+	if maxParallel < 1 {
+		maxParallel = 1
+	}
+
+	return maxParallel
+}
+
+func Run(r *sshrun.Run, options Options) (err error) {
+	options.normalize()
+
 	monitor := Monitor{}
 	monitor.r = r
+	monitor.options = options
 
 	monitor.enableTop = false
 
@@ -91,6 +132,7 @@ func (m *Monitor) CreateNode(server string, wg *sync.WaitGroup) {
 
 	// node
 	node := NewNode(server)
+	node.monitorInterval = m.options.updateInterval()
 
 	m.Lock()
 	m.Nodes = append(m.Nodes, node)

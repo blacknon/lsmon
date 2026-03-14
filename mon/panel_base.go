@@ -69,8 +69,9 @@ func (m *Monitor) createBasePanel() (baseGrid *mview.Grid) {
 }
 
 func (m *Monitor) reconnectServer() {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(m.options.reconnectInterval())
 	defer ticker.Stop()
+	semaphore := make(chan struct{}, m.options.reconnectMaxParallel())
 
 	for range ticker.C {
 		var wg sync.WaitGroup
@@ -81,6 +82,9 @@ func (m *Monitor) reconnectServer() {
 
 				go func(n *Node, r *ssh.Run, wgg *sync.WaitGroup) {
 					defer wgg.Done()
+					semaphore <- struct{}{}
+					defer func() { <-semaphore }()
+
 					log.Printf("try Reconnect Server: %s", n.ServerName)
 					err := n.Connect(r)
 

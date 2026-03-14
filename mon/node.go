@@ -132,6 +132,10 @@ type Node struct {
 	// Top
 	NodeTop *NodeTop
 
+	monitorInterval time.Duration
+	cpuCoreCache    int
+	cpuCoreCached   bool
+
 	taskCountCache     uint64
 	taskCountUpdatedAt time.Time
 
@@ -171,6 +175,8 @@ func NewNode(name string) *Node {
 		// NetworkIO
 		NetworkIOs:      map[string][]*NetworkIO{},
 		NetworkIOsLimit: 480,
+
+		monitorInterval: 2 * time.Second,
 	}
 
 	return node
@@ -235,12 +241,26 @@ func (n *Node) GetCPUCore() (cn int, err error) {
 		return
 	}
 
+	n.RLock()
+	if n.cpuCoreCached {
+		cn = n.cpuCoreCache
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
+
 	cpuinfo, err := n.con.ReadCPUInfo(n.PathProcCpuinfo)
 	if err != nil {
 		return
 	}
 
 	cn = cpuinfo.NumCPU()
+
+	n.Lock()
+	n.cpuCoreCache = cn
+	n.cpuCoreCached = true
+	n.Unlock()
+
 	return
 }
 
@@ -870,7 +890,7 @@ func (n *Node) MonitoringNetworkIO() (err error) {
 }
 
 func (n *Node) StartMonitoring() {
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(n.monitorInterval)
 	defer ticker.Stop()
 
 	for range ticker.C {

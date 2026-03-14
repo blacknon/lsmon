@@ -105,7 +105,7 @@ func (n *Node) CreateNodeTop() (err error) {
 
 	// go routine for update
 	go func() {
-		ticker := time.NewTicker(2 * time.Second)
+		ticker := time.NewTicker(n.monitorInterval)
 		defer ticker.Stop()
 
 		for range ticker.C {

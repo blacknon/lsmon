@@ -163,7 +163,7 @@ func (m *Monitor) updateBaseGridTableRows() {
 	// Get table rows count
 	count := m.table.GetRowCount()
 
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(m.options.updateInterval())
 	defer ticker.Stop()
 	maxParallel := runtime.NumCPU()
 	if maxParallel > baseGridUpdateMaxParallel {

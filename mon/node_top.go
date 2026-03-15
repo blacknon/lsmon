@@ -15,6 +15,11 @@ import (
 
 var IOCount = 50
 
+const (
+	topCPUVisibleRows = 6
+	topIOVisibleRows  = 5
+)
+
 type NodeTop struct {
 	Grid         *mview.Grid
 	CPUUsage     *TopCPUUsage
@@ -70,7 +75,7 @@ func (n *Node) CreateNodeTop() (err error) {
 	top.Grid.SetColumns(50, 0, 0)
 
 	// create rows
-	top.Grid.SetRows(5, 2, 1, 0, 1, 0, -1)
+	top.Grid.SetRows(topCPUVisibleRows-1, 2, 1, 0, 1, 0, -1)
 
 	// create top panel
 	top.CPUUsage = n.CreateTopCPUUsage()
@@ -165,10 +170,10 @@ func (n *Node) CreateNodeTop() (err error) {
 			}
 
 			// Resize
-			height4Row := top.DiskUsage.GetRowCount()
-			height6Row := top.NetworkUsage.GetRowCount()
+			height4Row := cappedTableHeight(top.DiskUsage.GetRowCount(), topIOVisibleRows)
+			height6Row := cappedTableHeight(top.NetworkUsage.GetRowCount(), topIOVisibleRows)
 
-			top.Grid.SetRows(5, 2, 1, height4Row, 1, height6Row, -1)
+			top.Grid.SetRows(topCPUVisibleRows-1, 2, 1, height4Row, 1, height6Row, -1)
 		}
 	}()
 
@@ -191,4 +196,17 @@ func createEmptyPrimitive() mview.Primitive {
 	empty.SetBackgroundColor(mview.ColorUnset)
 
 	return empty
+}
+
+func cappedTableHeight(rowCount, visibleRows int) int {
+	if rowCount <= 0 {
+		return 0
+	}
+
+	maxHeight := visibleRows + 1 // header row
+	if rowCount > maxHeight {
+		return maxHeight
+	}
+
+	return rowCount
 }

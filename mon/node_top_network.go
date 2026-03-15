@@ -30,6 +30,11 @@ func (n *Node) CreateTopNetworkInfomation() (result *TopNetworkInfomation) {
 	// Set border options
 	table.SetBorder(false)
 
+	// Allow keyboard/mouse scrolling when the number of devices exceeds the view height.
+	table.SetSelectable(true, false)
+	table.SetScrollBarVisibility(mview.ScrollBarAuto)
+	table.SetEvaluateAllRows(true)
+
 	// Set background color(no color)
 	table.SetBackgroundColor(mview.ColorUnset)
 
@@ -68,6 +73,8 @@ func (t *TopNetworkInfomation) Update(wg *sync.WaitGroup) {
 		return
 	}
 
+	state := captureTopTableState(t.Table, 0)
+
 	// Get Network Infomation
 	networkUsages, err := t.Node.GetNetworkUsage()
 	if err != nil {
@@ -80,20 +87,23 @@ func (t *TopNetworkInfomation) Update(wg *sync.WaitGroup) {
 
 		// NetworkDevice
 		device := networkUsage.Device
-		tableCell := mview.NewTableCell(device)
+		tableCell := mview.NewTableCell(padTableText(device, 12))
 		tableCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
+		tableCell.SetAlign(mview.AlignLeft)
 		t.SetCell(row, 0, tableCell)
 
 		// IPv4Address
 		ipv4 := networkUsage.IPv4Address
-		tableCell = mview.NewTableCell(fmt.Sprintf("[gray]%s[none]", ipv4))
+		tableCell = mview.NewTableCell(fmt.Sprintf("[gray]%s[none]", padTableText(ipv4, 15)))
 		tableCell.SetTextColor(tcell.ColorWhite)
+		tableCell.SetAlign(mview.AlignLeft)
 		t.SetCell(row, 1, tableCell)
 
 		// IPv6Address
 		ipv6 := networkUsage.IPv6Address
-		tableCell = mview.NewTableCell(fmt.Sprintf("[gray]%s[none]", ipv6))
+		tableCell = mview.NewTableCell(fmt.Sprintf("[gray]%s[none]", padTableText(ipv6, 39)))
 		tableCell.SetTextColor(tcell.ColorWhite)
+		tableCell.SetAlign(mview.AlignLeft)
 		t.SetCell(row, 2, tableCell)
 
 		// RXBytes
@@ -121,7 +131,7 @@ func (t *TopNetworkInfomation) Update(wg *sync.WaitGroup) {
 			networkRXBytes := fmt.Sprintf("[gray]%8s[none] [gray]%s[none]", rxByte, brailleLine)
 			networkRXBytesCell = mview.NewTableCell(networkRXBytes)
 		} else {
-			networkRXBytes := fmt.Sprintf("[gray]%s[none]", "-")
+			networkRXBytes := fmt.Sprintf("[gray]%8s[none] [gray]%-*s[none]", "-", IOCount, "-")
 			networkRXBytesCell = mview.NewTableCell(networkRXBytes)
 		}
 		networkRXBytesCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
@@ -152,7 +162,7 @@ func (t *TopNetworkInfomation) Update(wg *sync.WaitGroup) {
 			networkTXBytes := fmt.Sprintf("[gray]%8s[none] [gray]%s[none]", txByte, brailleLine)
 			networkTXBytesCell = mview.NewTableCell(networkTXBytes)
 		} else {
-			networkTXBytes := fmt.Sprintf("[gray]%s[none]", "-")
+			networkTXBytes := fmt.Sprintf("[gray]%8s[none] [gray]%-*s[none]", "-", IOCount, "-")
 			networkTXBytesCell = mview.NewTableCell(networkTXBytes)
 		}
 		networkTXBytesCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
@@ -183,7 +193,7 @@ func (t *TopNetworkInfomation) Update(wg *sync.WaitGroup) {
 			networkRXPackets := fmt.Sprintf("[gray]%8d[none] [gray]%s[none]", rxPacket, brailleLine)
 			networkRXPacketsCell = mview.NewTableCell(networkRXPackets)
 		} else {
-			networkRXPackets := fmt.Sprintf("[gray]%s[none]", "-")
+			networkRXPackets := fmt.Sprintf("[gray]%8s[none] [gray]%-*s[none]", "-", IOCount, "-")
 			networkRXPacketsCell = mview.NewTableCell(networkRXPackets)
 		}
 		networkRXPacketsCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
@@ -214,16 +224,19 @@ func (t *TopNetworkInfomation) Update(wg *sync.WaitGroup) {
 			networkTXPackets := fmt.Sprintf("[gray]%8d[none] [gray]%s[none]", txPacket, brailleLine)
 			networkTXPacketsCell = mview.NewTableCell(networkTXPackets)
 		} else {
-			networkTXPackets := fmt.Sprintf("[gray]%s[none]", "-")
+			networkTXPackets := fmt.Sprintf("[gray]%8s[none] [gray]%-*s[none]", "-", IOCount, "-")
 			networkTXPacketsCell = mview.NewTableCell(networkTXPackets)
 		}
 		networkTXPacketsCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
 		t.Table.SetCell(row, 6, networkTXPacketsCell)
 	}
 
+	trimTopTableRows(t.Table, len(networkUsages)+1)
+
 	sortColumn := t.GetSortClickedColumn()
 	isDescending := t.GetSortClickedDescending()
 	t.Sort(sortColumn, isDescending)
+	restoreTopTableState(t.Table, state, 0)
 }
 
 func getTopNetworkHeader() []string {

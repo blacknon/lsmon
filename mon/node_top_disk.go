@@ -26,6 +26,11 @@ func (n *Node) CreateTopDiskInfomation() (result *TopDiskInfomation) {
 	// Set border options
 	table.SetBorder(false)
 
+	// Allow keyboard/mouse scrolling when the number of devices exceeds the view height.
+	table.SetSelectable(true, false)
+	table.SetScrollBarVisibility(mview.ScrollBarAuto)
+	table.SetEvaluateAllRows(true)
+
 	// Set background color(no color)
 	table.SetBackgroundColor(mview.ColorUnset)
 
@@ -64,6 +69,8 @@ func (t *TopDiskInfomation) Update(wg *sync.WaitGroup) {
 		return
 	}
 
+	state := captureTopTableState(t.Table, 0)
+
 	// Get and Set Memory Usage
 	diksinfo, err := t.Node.GetDiskUsage()
 	if err != nil {
@@ -74,13 +81,15 @@ func (t *TopDiskInfomation) Update(wg *sync.WaitGroup) {
 		row := i + 1
 
 		// Disk Path(2)
-		diskPathCell := mview.NewTableCell(disk.Device)
+		diskPathCell := mview.NewTableCell(padTableText(disk.Device, 12))
 		diskPathCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
+		diskPathCell.SetAlign(mview.AlignLeft)
 		t.Table.SetCell(row, 0, diskPathCell)
 
 		// Disk MountPoint(3)
-		diskMountPointCell := mview.NewTableCell(fmt.Sprintf("[gray]%s[none]", disk.MountPoint))
+		diskMountPointCell := mview.NewTableCell(fmt.Sprintf("[gray]%s[none]", padTableText(disk.MountPoint, 20)))
 		diskMountPointCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
+		diskMountPointCell.SetAlign(mview.AlignLeft)
 		t.Table.SetCell(row, 1, diskMountPointCell)
 
 		// Disk Usage(Used/Total)(4)
@@ -128,7 +137,7 @@ func (t *TopDiskInfomation) Update(wg *sync.WaitGroup) {
 			diskReadIO := fmt.Sprintf("[gray]%8s[none] [gray]%s[none]", readByte, brailleLine)
 			diskReadIOCell = mview.NewTableCell(diskReadIO)
 		} else {
-			diskReadIO := fmt.Sprintf("[gray]%s[none]", "-")
+			diskReadIO := fmt.Sprintf("[gray]%8s[none] [gray]%-*s[none]", "-", IOCount, "-")
 			diskReadIOCell = mview.NewTableCell(diskReadIO)
 		}
 		diskReadIOCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
@@ -159,16 +168,19 @@ func (t *TopDiskInfomation) Update(wg *sync.WaitGroup) {
 			diskWriteIO := fmt.Sprintf("[gray]%8s[none] [gray]%s[none]", writeByte, brailleLine)
 			diskWriteIOCell = mview.NewTableCell(diskWriteIO)
 		} else {
-			diskWriteIO := fmt.Sprintf("[gray]%s[none]", "-")
+			diskWriteIO := fmt.Sprintf("[gray]%8s[none] [gray]%-*s[none]", "-", IOCount, "-")
 			diskWriteIOCell = mview.NewTableCell(diskWriteIO)
 		}
 		diskWriteIOCell.SetTextColor(tcell.NewRGBColor(0, 255, 255))
 		t.Table.SetCell(row, 6, diskWriteIOCell)
 	}
 
+	trimTopTableRows(t.Table, len(diksinfo)+1)
+
 	sortColumn := t.GetSortClickedColumn()
 	isDescending := t.GetSortClickedDescending()
 	t.Sort(sortColumn, isDescending)
+	restoreTopTableState(t.Table, state, 0)
 }
 
 func getTopDiskHeader() []string {

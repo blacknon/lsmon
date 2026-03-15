@@ -25,6 +25,10 @@ func (n *Node) CreateTopCPUUsage() (result *TopCPUUsage) {
 	// Set border options
 	table.SetBorder(false)
 
+	// Allow keyboard/mouse scrolling when the number of cores exceeds the view height.
+	table.SetSelectable(true, false)
+	table.SetScrollBarVisibility(mview.ScrollBarAuto)
+
 	// Set background color(no color)
 	table.SetBackgroundColor(mview.ColorUnset)
 

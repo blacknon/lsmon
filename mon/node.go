@@ -93,6 +93,13 @@ type NetworkIO struct {
 	sync.RWMutex
 }
 
+type BaseSnapshot struct {
+	Uptime    *linux.Uptime
+	MemInfo   *linux.MemInfo
+	LoadAvg   *linux.LoadAvg
+	UpdatedAt time.Time
+}
+
 // Node is monitoring node struct
 type Node struct {
 	ServerName string
@@ -136,8 +143,14 @@ type Node struct {
 	cpuCoreCache    int
 	cpuCoreCached   bool
 
+	baseSnapshot BaseSnapshot
+
 	taskCountCache     uint64
 	taskCountUpdatedAt time.Time
+
+	ipv4Cache            []sshproc.IPv4
+	ipv6Cache            []sshproc.IPv6
+	networkMetaUpdatedAt time.Time
 
 	sync.RWMutex
 }
@@ -231,6 +244,8 @@ func (n *Node) Connect(r *sshrun.Run) (err error) {
 			log.Printf("CloseSession Error: %s", err)
 		}
 	}()
+
+	go n.runWarmupStages()
 
 	return
 }
@@ -529,9 +544,9 @@ func (n *Node) GetMemoryUsage() (memUsed, memTotal, swapUsed, swapTotal uint64, 
 		return
 	}
 
-	meminfo, err := n.con.ReadMemInfo(n.PathProcMeminfo)
-	if err != nil {
-		return
+	meminfo, err := n.GetMemInfo()
+	if err != nil || meminfo == nil {
+		return memUsed, memTotal, swapUsed, swapTotal, err
 	}
 
 	// memory
@@ -550,6 +565,14 @@ func (n *Node) GetMemInfo() (memInfo *linux.MemInfo, err error) {
 		err = fmt.Errorf("Node is not connected")
 		return
 	}
+
+	n.RLock()
+	if n.baseSnapshot.MemInfo != nil {
+		memInfo = n.baseSnapshot.MemInfo
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
 
 	memInfo, err = n.con.ReadMemInfo(n.PathProcMeminfo)
 	return
@@ -582,6 +605,14 @@ func (n *Node) GetUptime() (uptime *linux.Uptime, err error) {
 		err = fmt.Errorf("Node is not connected")
 		return
 	}
+
+	n.RLock()
+	if n.baseSnapshot.Uptime != nil {
+		uptime = n.baseSnapshot.Uptime
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
 
 	uptime, err = n.con.ReadUptime(n.PathProcUptime)
 	return
@@ -621,6 +652,14 @@ func (n *Node) GetLoadAvg() (loadavg *linux.LoadAvg, err error) {
 		err = fmt.Errorf("Node is not connected")
 		return
 	}
+
+	n.RLock()
+	if n.baseSnapshot.LoadAvg != nil {
+		loadavg = n.baseSnapshot.LoadAvg
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
 
 	loadavg, err = n.con.ReadLoadAvg(n.PathProcLoadavg)
 
@@ -745,10 +784,23 @@ func (n *Node) GetIPv4() (ipv4 []sshproc.IPv4, err error) {
 		return
 	}
 
+	n.RLock()
+	if !n.networkMetaUpdatedAt.IsZero() && time.Since(n.networkMetaUpdatedAt) < networkMetaCacheTTL && len(n.ipv4Cache) > 0 {
+		ipv4 = append(ipv4, n.ipv4Cache...)
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
+
 	ipv4, err = n.con.ReadFibTrie("/proc/net/fib_trie", "/proc/net/route")
 	if err != nil {
 		return
 	}
+
+	n.Lock()
+	n.ipv4Cache = append([]sshproc.IPv4(nil), ipv4...)
+	n.networkMetaUpdatedAt = time.Now()
+	n.Unlock()
 
 	return
 }
@@ -759,10 +811,23 @@ func (n *Node) GetIPV6() (ipv6 []sshproc.IPv6, err error) {
 		return
 	}
 
+	n.RLock()
+	if !n.networkMetaUpdatedAt.IsZero() && time.Since(n.networkMetaUpdatedAt) < networkMetaCacheTTL && len(n.ipv6Cache) > 0 {
+		ipv6 = append(ipv6, n.ipv6Cache...)
+		n.RUnlock()
+		return
+	}
+	n.RUnlock()
+
 	ipv6, err = n.con.ReadIfInet6("/proc/net/if_inet6")
 	if err != nil {
 		return
 	}
+
+	n.Lock()
+	n.ipv6Cache = append([]sshproc.IPv6(nil), ipv6...)
+	n.networkMetaUpdatedAt = time.Now()
+	n.Unlock()
 
 	return
 }
@@ -890,13 +955,17 @@ func (n *Node) MonitoringNetworkIO() (err error) {
 }
 
 func (n *Node) StartMonitoring() {
+	if jitter := n.monitorJitter(); jitter > 0 {
+		time.Sleep(jitter)
+	}
+
+	n.MonitoringBundle()
+
 	ticker := time.NewTicker(n.monitorInterval)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		n.MonitoringCPUUsage()
-		n.MonitoringDiskIO()
-		n.MonitoringNetworkIO()
+		n.MonitoringBundle()
 	}
 }
 
